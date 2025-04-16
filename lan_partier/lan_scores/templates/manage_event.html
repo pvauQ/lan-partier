@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<title>{{event.name}}</title>
+</head>
+<BODY TEXT="white">
+
+<h1 style="color:rgba(84, 255, 0, 1); background-color:rgba(0, 0, 0, 1); text-align:center; font-size:600%;">{{event.name}} Scoreboard {{event.time}}</h1>
+
+
+<table style="width:100%">
+  <tr>
+  	<th style="width:30%"></th>
+
+      {% for player in players %}
+      <th style="width:8,75%"> <a href = "{{player.link}}">x {{player.name}}</a> <br><a href="{{player.link}}">
+                            <img src="{{player.pic_link}}" style="width:100px;height:100px;"></a></th>
+      {% endfor %}
+  </tr>
+  <tr>
+    <th><p style="font-size:50px;">Yhteispisteet</p></th>
+    {%for score in total_scores%}
+      <th><p style="font-size:50px;">{{score}}</p></th>
+    {%endfor%}
+  </tr>
+
+
+{%for game, row in scores%}
+
+  <tr>
+
+    <th><a href = "{% if '://' not in game.game.link %} http://{% endif %}{{game.game.link}}">{{game.game.name}} </a> 
+    <a href =  "{% if '://' not in game.game.extra_link %} http://{% endif %}{{game.game.extra_link}}">{{game.game.extra_text}} </a>
+    </th>
+
+    <form method="POST" action="{% url 'update_score'%}">
+    {% csrf_token %}
+    <input type="hidden" name="game_instance_id" value="{{ game.id }}">
+    
+    {%for col in row%} 
+    <th>{{col}}
+        <input type="hidden" name="player_id" value="{{ col.1 }}">
+              <input type="number" name="{{forloop.counter0 }}" value="{{ col.0 }}", style="font-size:50px; width:100px;" />
+    </th>
+
+    {% if forloop.last %}
+    <th>
+      <button type="submit" style="font-size:50px;">Update</button>
+    </th>
+    {%endif%}
+    {%endfor%}
+  </form>
+
+  </tr>
+{%endfor%}
+
+</table>
+
+{{event.id}}
+<form method = "POST" action="{%url 'add_game_event'%}">
+  <input type="hidden" name="event_id" value="{{ event.id }}"> 
+  {% csrf_token %}
+  <p>>select:</p>
+  {{add_form.existing_game}}
+
+  <p>or add new one!</p>
+  
+  <p> Name {{ add_form.name }}</p>
+  <p> link (optional) {{ add_form.link }}</p>
+  <p> extra link (optional) {{ add_form.extra_link }}</p>
+  <p> extra text (optional) {{ add_form.extra_text }}  </p>
+
+  <button type="submit">ADD PERKELE</button>
+</form>
+  
+
+
+<a href="{% url 'manage_event' name=event.name id=event.id %}">
+  Manage {{ event.name }}
+</a>
+TODO:: LINKKIT ULOS JA TOISAALTA SISÄÄN
+
+</body>
+</html>
+
+{% endblock content%}

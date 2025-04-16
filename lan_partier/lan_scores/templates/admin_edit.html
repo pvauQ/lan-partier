@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8" />
+
+
+
+<title>{{event.name}}</title>
+</head>
+<body>
+
+<h2> players</h2> <br>
+
+<table>
+    {% for player in players %}
+    <tr>
+        <td>
+            <a href="{{ player.link }}">
+                <img src="{{ player.pic_link }}" style="width:100px; height:100px;">
+            </a>
+        </td>
+           <td style="padding: 8px;">
+            <form method="post" action="{% url 'update_player' %}">
+                {% csrf_token %}
+                <input type="hidden" name="player_id" value="{{ player.id }}">
+                
+                <label>Name:</label><br>
+                <input type="text" name="name" value="{{ player.name }}" style="width:100%; margin-bottom: 5px;"><br>
+                
+                <label>Image URL:</label><br>
+                <input type="text" name="pic_link" value="{{ player.pic_link }}" style="width:100%; margin-bottom: 5px;"><br>
+                
+                <label>Profile Link:</label><br>
+                <input type="text" name="link" value="{{ player.link }}" style="width:100%; margin-bottom: 5px;"><br>
+                
+                <button type="submit" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; cursor: pointer;">
+                    Update
+                </button>
+            </form>
+    </tr>
+    
+    {% endfor %}
+</table>
+
+<h2> games</h2> <br>
+
+
+
+
+<table>
+    {% for game in games %}
+    <tr>
+        <td>
+            <a href="{{ game.link }}">{{ game.name }}</a>
+        </td>    
+        <td>
+            <form method="post" action="{% url 'update_game' %}">
+                {% csrf_token %}
+                <input type="hidden" name="game_id" value="{{ game.id }}">
+                
+                <label>Name:</label><br>
+                <input type="text" name="name" value="{{ game.name }}"><br>
+                
+                <label>Link:</label><br>
+                <input type="text" name="link" value="{{ game.link }}"><br>
+                
+                <label>Extra Text:</label><br>
+                <input type="text" name="extra_text" value="{{ game.extra_text }}"><br>
+                
+                <label>Extra Link:</label><br>
+                <input type="text" name="extra_link" value="{{ game.extra_link }}"><br>
+                
+                <button type="submit">Update Game</button>
+                <br> ---------------
+            </form>
+        </td>
+        
+    </tr>
+    
+    {% endfor %} 
+</table>
+
+
+</body>
+</html>
