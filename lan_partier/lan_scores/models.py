@@ -52,7 +52,7 @@ class GameInstance(models.Model):
 class Scores(models.Model):
     def __str__(self):
         return f"{self.game_instance} : - {self.player} - {self.score}"
-    game_instance = models.ForeignKey(GameInstance,on_delete=models.SET_NULL, null= True) # never delete bro
+    game_instance = models.ForeignKey(GameInstance,on_delete=models.CASCADE, null= True) # never delete bro
     player = models.ForeignKey(Player,on_delete=models.SET_NULL, null = True) # never delete bro
     score = models.IntegerField()
 

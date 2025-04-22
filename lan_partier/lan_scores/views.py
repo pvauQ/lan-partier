@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from .forms import LoginForm, AddGameForm
+from .forms import LoginForm, AddGameForm, AddPlayerForm
 from django.http import HttpResponse
 
 
@@ -32,15 +32,16 @@ def sign_in(request):
 
 
 def event(request, event_name, event_id):
-    event = Event.objects.filter(id = event_id).first
-    latest_event = Event.objects.latest('event_date')
-    players = latest_event.players.all() 
+    event = Event.objects.filter(id = event_id).first()
+    #latest_event = Event.objects.latest('event_date')
+    players = event.players.all() 
 
 
-    event_games =  GameInstance.objects.filter(event = latest_event)
+    event_games =  GameInstance.objects.filter(event = event)
     games = Game.objects.filter(id__in = event_games.values('game'))
-    #rint(games)
-    scores =(Scores.objects.filter(game_instance__in=games.values_list('id'))
+    
+    print(games.values_list('id'))
+    scores =(Scores.objects.filter(game_instance__in=event_games.values_list('id'))
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
     ) 
@@ -50,11 +51,14 @@ def event(request, event_name, event_id):
         pelaajat[i] = players[i]
     for i in range(len(pelit)):
         pelit[i] = event_games[i]
-        print(pelit[i])
+        #print(pelit[i])
     pisteet = [[0 for _ in range(len(pelaajat))] for _ in range(len(pelit))]
     total_pisteet = [0 for _ in range(len(pelaajat))] 
 
     for x in range(len(pelit)):
+        if pelit[x].hiden == True:
+            pisteet[x][y] = (0, pelaajat[y].id)
+            continue
         for y in range(len(pelaajat)):
             s = scores.filter(game_instance = pelit[x], player = pelaajat[y])
             s = list(s.values_list('score', flat=True))
@@ -63,10 +67,12 @@ def event(request, event_name, event_id):
                 total_pisteet[y] += s[0]
             else: pisteet[x][y] = 0
 
+    print("perkele")
+    print(scores)
     pisteet_pelit = zip(pelit,pisteet)
 
     context = {
-        'event': latest_event,
+        'event': event,
         'players': players,
         'event_games': event_games,
         'games': games,
@@ -84,16 +90,17 @@ def home(request):
 
 
 
-def manage(request, name, id):
-
-    event = Event.objects.filter(id=id).first()
+def manage(request, event_name, event_id):
+    event = Event.objects.filter(id = event_id).first()
+    #latest_event = Event.objects.latest('event_date')
     players = event.players.all() 
 
 
     event_games =  GameInstance.objects.filter(event = event)
     games = Game.objects.filter(id__in = event_games.values('game'))
-    #rint(games)
-    scores =(Scores.objects.filter(game_instance__in=games.values_list('id'))
+    
+    print(games.values_list('id'))
+    scores =(Scores.objects.filter(game_instance__in=event_games.values_list('id'))
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
     ) 
@@ -108,6 +115,9 @@ def manage(request, name, id):
     total_pisteet = [0 for _ in range(len(pelaajat))] 
 
     for x in range(len(pelit)):
+        if pelit[x].hiden == True:
+            pisteet[x][y] = (0, pelaajat[y].id)
+            continue
         for y in range(len(pelaajat)):
             s = scores.filter(game_instance = pelit[x], player = pelaajat[y])
             s = list(s.values_list('score', flat=True))
@@ -122,6 +132,7 @@ def manage(request, name, id):
     pisteet_pelaajat = (pisteet,pelaajat)
     pisteet_pelit = zip(pelit,pisteet) #game_instance, 2dlist
     form = AddGameForm(request.POST)
+    player_form = AddPlayerForm(request.POST)
 
     context = {
         'event': event,
@@ -130,7 +141,8 @@ def manage(request, name, id):
         'games': games,
         'scores': pisteet_pelit,
         'total_scores': total_pisteet,
-        'add_form': form
+        'add_form': form,
+        'add_player_form': player_form
     }
     return render(request, "manage_event.html", context)
 
@@ -182,8 +194,35 @@ def update_score(request):
             print(f" old {score} new score {new_score}")
 
     
-    return redirect('manage_event', name = GI.event.name, id = GI.event.id)
+    return redirect('manage_event', event_name = GI.event.name, event_id = GI.event.id)
 
+def add_player_event(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        form = AddPlayerForm(request.POST)
+        event_id = request.POST.get('event_id')
+        if form.is_valid():
+            data = form.cleaned_data
+        else: return Http404
+        player = Player()
+        if data["name"] != "":
+            player.name = data['name']
+            player.link = data['link']
+            player.pic_link = data['pic_link']
+            player.save()
+        else:
+            print(f"adding existing player {data['existing_player']}")
+            player = Player.objects.filter(name = data['existing_player']).first()
+
+        event = Event.objects.filter(id =event_id).first()
+        if not EventPlayers.objects.filter(event = event, player = player).exists():
+            event_player = EventPlayers()
+            event_player.player = player
+            event_player.event = event
+            event_player.save()
+            print("widdu")
+
+
+    return redirect('manage_event', event_name = event.name, event_id = event.id)
 
 def add_game_event(request):
     if request.method == 'POST' and request.user.is_authenticated:
@@ -219,6 +258,24 @@ def add_game_event(request):
     
 
 
+
+def hide_gameinstance(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        gi_id = request.POST.get('game_instance_id')
+        GI = GameInstance.objects.filter(id = gi_id).first()
+        GI.hiden = not GI.hiden
+        GI.save()
+    return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
+
+def delete_gameinstance(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        gi_id = request.POST.get('game_instance_id')
+        GI = GameInstance.objects.filter(id = gi_id).first()
+        GI.delete()
+        print("mitävittuu")
+        return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
+
+        
 def update_event(request,id):
     if request.method == 'POST' and request.user.is_authenticated:
         pass

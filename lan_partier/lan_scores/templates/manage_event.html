@@ -15,7 +15,7 @@
   	<th style="width:30%"></th>
 
       {% for player in players %}
-      <th style="width:8,75%"> <a href = "{{player.link}}">x {{player.name}}</a> <br><a href="{{player.link}}">
+      <th style="width:8,75%"> <a href = "{{player.link}}"> {{player.name}}</a> <br><a href="{{player.link}}">
                             <img src="{{player.pic_link}}" style="width:100px;height:100px;"></a></th>
       {% endfor %}
   </tr>
@@ -31,8 +31,12 @@
 
   <tr>
 
-    <th><a href = "{% if '://' not in game.game.link %} http://{% endif %}{{game.game.link}}">{{game.game.name}} </a> 
-    <a href =  "{% if '://' not in game.game.extra_link %} http://{% endif %}{{game.game.extra_link}}">{{game.game.extra_text}} </a>
+    <th>
+      {%if game.hiden == True%}
+      HIDEN GAME: 
+      {%endif%}
+      <a href = "{% if '://' not in game.game.link %} http://{% endif %}{{game.game.link}}">{{game.game.name}} </a> 
+      <a href =  "{% if '://' not in game.game.extra_link %} http://{% endif %}{{game.game.extra_link}}">{{game.game.extra_text}} </a>
     </th>
 
     <form method="POST" action="{% url 'update_score'%}">
@@ -42,46 +46,87 @@
     {%for col in row%} 
     <th>{{col}}
         <input type="hidden" name="player_id" value="{{ col.1 }}">
-              <input type="number" name="{{forloop.counter0 }}" value="{{ col.0 }}", style="font-size:50px; width:100px;" />
+              <input type="number" name="{{forloop.counter0 }}" value="{{ col.0 }}", style="font-size:30px; width:100px;" />
     </th>
 
     {% if forloop.last %}
-    <th>
-      <button type="submit" style="font-size:50px;">Update</button>
-    </th>
-    {%endif%}
-    {%endfor%}
-  </form>
+    <th style="width:450px">
+      <button type= "submit" style="font-size:30px;">Update</button>
+      {%endif%}
+      {%endfor%}
+    </form>
+    <form style="display:inline;"  method = "POST" action=" {% url  'hide_gameinstance' %}">
+        {%csrf_token%}
+        <input type="hidden" name="game_instance_id" value="{{ game.id }}">
+        {%if game.hiden == True%}
+        <button type="submit" style="font-size:30px;">show</button>
+        {%else%}
+        <button type="submit" style="font-size:30px;">Hide</button>  
+        {%endif%}
+
+    </form>
+
+    <form style="display:inline;" method = "POST" action=" {% url 'delete_gameinstance' %}" onclick="return confirm('if u delete, scores are lost!!');">
+        {%csrf_token%}
+        <input type="hidden" name="game_instance_id" value="{{ game.id }}">
+        <button type="submit" style="font-size:30px;">Delete</button>
+    </form>
+  </th>
 
   </tr>
 {%endfor%}
 
 </table>
 
-{{event.id}}
-<form method = "POST" action="{%url 'add_game_event'%}">
-  <input type="hidden" name="event_id" value="{{ event.id }}"> 
-  {% csrf_token %}
-  <p>>select:</p>
-  {{add_form.existing_game}}
 
-  <p>or add new one!</p>
-  
-  <p> Name {{ add_form.name }}</p>
-  <p> link (optional) {{ add_form.link }}</p>
-  <p> extra link (optional) {{ add_form.extra_link }}</p>
-  <p> extra text (optional) {{ add_form.extra_text }}  </p>
+<table>
+  <tr>
+    <td>
+      <h4> add game:</h4>
+      <form method = "POST" action="{%url 'add_game_event'%}">
+        <input type="hidden" name="event_id" value="{{ event.id }}"> 
+        {% csrf_token %}
+        <p>>select:</p>
+        {{add_form.existing_game}}
 
-  <button type="submit">ADD PERKELE</button>
-</form>
-  
+        <p>or add new one!</p>
+        
+        <p> Name {{ add_form.name }}</p>
+        <p> link (optional) {{ add_form.link }}</p>
+        <p> extra link (optional) {{ add_form.extra_link }}</p>
+        <p> extra text (optional) {{ add_form.extra_text }}  </p>
+        <button type="submit">ADD PERKELE</button>
+      </form>
+    </td>
+    
+    <td>
+      <h4> add player:</h4>
+      <form method = "POST" action="{%url 'add_player_event'%}">
+        <input type="hidden" name="event_id" value="{{ event.id }}"> 
+        {% csrf_token %}
+        <p>>select:</p>
+        {{add_player_form.existing_player}}
+
+        <p>or add new one!</p>
+        
+        <p> Name {{ add_form.name }}</p>
+        <p> link (optional) {{ add_player_form.link }}</p>
+        <p> pic link {{ add_player_form.pic_link }}</p>
+        <button type="submit">ADD player</button>
+      </form>
 
 
-<a href="{% url 'manage_event' name=event.name id=event.id %}">
+    </td>
+
+
+  </tr>
+</table>
+
+<a href="{% url 'manage_event' event_name=event.name  event_id=event.id %}">
   Manage {{ event.name }}
 </a>
 TODO:: LINKKIT ULOS JA TOISAALTA SISÄÄN
-
+    
 </body>
 </html>
 
