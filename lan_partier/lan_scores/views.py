@@ -221,8 +221,19 @@ def add_player_event(request):
             event_player.save()
             print("widdu")
 
-
     return redirect('manage_event', event_name = event.name, event_id = event.id)
+
+
+def delete_player_event(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+
+        event = Event.objects.filter(id =request.POST.get('event_id')).first()
+        player = Player.objects.filter(id = request.POST.get('player_id')).first()
+
+        EventPlayers.objects.filter(event  =event, player = player).first().delete()
+        
+
+    return redirect('manage_event', event_name = event.name, event_id = request.POST.get('event_id') )
 
 def add_game_event(request):
     if request.method == 'POST' and request.user.is_authenticated:
@@ -272,7 +283,6 @@ def delete_gameinstance(request):
         gi_id = request.POST.get('game_instance_id')
         GI = GameInstance.objects.filter(id = gi_id).first()
         GI.delete()
-        print("mitävittuu")
         return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
 
         

@@ -15,8 +15,15 @@
   	<th style="width:30%"></th>
 
       {% for player in players %}
-      <th style="width:8,75%"> <a href = "{{player.link}}"> {{player.name}}</a> <br><a href="{{player.link}}">
-                            <img src="{{player.pic_link}}" style="width:100px;height:100px;"></a></th>
+        <th style="width:8,75%">
+            <a href = "{{player.link}}"> {{player.name}}</a> <br><a href="{{player.link}}">
+                                <img src="{{player.pic_link}}" style="width:100px;height:100px;"></a><br>
+          <form style="display:inline;" method = "POST" action=" {% url 'delete_player_event' %}" onclick="return confirm('if u delete, scores are lost!! \n ARE YOU SURE!!!');">
+          {%csrf_token%}
+          <input type="hidden" name="player_id" value="{{ player.id }}">
+          <input type="hidden" name="event_id" value="{{ event.id }}">
+          <button type="submit" style="font-size:30px;">Delete</button>
+      </th>
       {% endfor %}
   </tr>
   <tr>
@@ -122,8 +129,8 @@
   </tr>
 </table>
 
-<a href="{% url 'manage_event' event_name=event.name  event_id=event.id %}">
-  Manage {{ event.name }}
+<a href="{% url 'event' event_name=event.name  event_id=event.id %}">
+  show {{ event.name }} as player
 </a>
 TODO:: LINKKIT ULOS JA TOISAALTA SISÄÄN
     

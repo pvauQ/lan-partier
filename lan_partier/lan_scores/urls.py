@@ -15,6 +15,7 @@ urlpatterns = [
     path('update-event/', views.update_event, name='update_event'),
     path('add-game-event/', views.add_game_event, name='add_game_event'),
     path('add-player-event/', views.add_player_event, name='add_player_event'),
+    path('delete-player-event/', views.delete_player_event, name='delete_player_event'),
     path('hide-gameinstance', views.hide_gameinstance, name = 'hide_gameinstance'),
     path('delete-gameinstance', views.delete_gameinstance, name = 'delete_gameinstance'),
 
