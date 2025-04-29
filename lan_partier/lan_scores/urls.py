@@ -2,9 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('kissa', views.home, name='home'),
-    path('front/', views.front_page, name = 'front_page'),
+    path('late', views.home, name='home'),
+    path('', views.front_page, name = 'front_page'),
     path('login/', views.sign_in, name='login'),
+    path('logout/', views.sign_out, name='logout'),
     path('edit/', views.edit_panel, name='edit'),
     path('event-<str:event_name>-<int:event_id>/', views.event, name='event'),
     path('manage-<str:event_name>-<int:event_id>/', views.manage, name='manage_event'),

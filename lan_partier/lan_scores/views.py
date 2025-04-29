@@ -1,9 +1,9 @@
 from django.shortcuts import render,redirect, get_object_or_404
 from .models import Event, EventPlayers, Player, GameInstance,Game,Scores
 from django.contrib import messages
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from .forms import LoginForm, AddGameForm, AddPlayerForm
 from django.http import HttpResponse
 
@@ -30,6 +30,9 @@ def sign_in(request):
         messages.error(request,f'Invalid username or password')
         return render(request,'login.html',{'form': form})
 
+def sign_out(request):
+    logout(request)
+    return redirect('login')  # or wherever you want to send users after logout
 
 def event(request, event_name, event_id):
     event = Event.objects.filter(id = event_id).first()
@@ -67,13 +70,11 @@ def event(request, event_name, event_id):
             else: pisteet[x][y] = 0
 
     high = -9999
-    winner_index = None
+    winner_index = 0
     for i, piste in enumerate(total_pisteet):
         if piste > high:
             high = piste
             winner_index = i
-            print(winner_index)
-        print(f"{ piste} ja indeksi {i} ja voittaja indeksi {winner_index}")
     winner_index += 1 #tasapeli ei oo kiva :D
 
 
@@ -94,7 +95,7 @@ def event(request, event_name, event_id):
 
 # Create your views here.
 def home(request):
-    latest_event = Event.objects.latest('event_date')
+    latest_event = Event.objects.last()
     return redirect('event', event_name = latest_event.name, event_id = latest_event.id)
 
 def front_page(request):
@@ -110,6 +111,9 @@ def front_page(request):
 
 
 def manage(request, event_name, event_id):
+    if not request.user.groups.filter(name='event_admin').exists():
+        return redirect('login')
+
     event = Event.objects.filter(id = event_id).first()
     #latest_event = Event.objects.latest('event_date')
     players = event.players.all() 
@@ -118,7 +122,7 @@ def manage(request, event_name, event_id):
     event_games =  GameInstance.objects.filter(event = event)
     games = Game.objects.filter(id__in = event_games.values('game'))
     
-    print(games.values_list('id'))
+    #print(games.values_list('id'))
     scores =(Scores.objects.filter(game_instance__in=event_games.values_list('id'))
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
@@ -170,7 +174,7 @@ def manage(request, event_name, event_id):
 
 
 def edit_panel(request):
-    if  not request.user.is_authenticated:
+    if not request.user.groups.filter(name='event_admin').exists():
         return redirect('login')
     players = Player.objects.all()
     games = Game.objects.all()
@@ -201,18 +205,14 @@ def update_score(request):
             player = Player.objects.filter(id = id).first()
             score = Scores.objects.filter(player = player, game_instance = GI).first()
             if not score:
-                print(" ei ole")
                 score = Scores()
-                print(GI)
                 score.player = player
                 score.game_instance = GI
                 score.score = new_score
-                print(score)
                 score.save()   
             else:
                 score.score = new_score
                 score.save()
-            print(f" old {score} new score {new_score}")  
         return redirect('manage_event', event_name = GI.event.name, event_id = GI.event.id)
     
     else: return redirect('login')
@@ -324,7 +324,6 @@ def update_event(request):
         event_name = request.POST.get('name')
 
         event = get_object_or_404(Event, id = event_id)
-        print(event_time)
         event.event_time =event_time
         event.name = event_name
         event.save()
@@ -338,6 +337,7 @@ def add_event(request):
         event = Event()
         event.name = "i'm a blank event edit mee"
         event.save()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else: return redirect('login')
 
@@ -364,7 +364,6 @@ def update_player(request):
 
 
 def update_game(request):
-    print("perkele")
     if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         game_id = request.POST.get('game_id')
         name = request.POST.get('name')

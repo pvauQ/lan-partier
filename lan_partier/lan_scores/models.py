@@ -14,9 +14,9 @@ class Event(models.Model):
     def __str__(self):
         return f"{self.name}"
     
-    name = models.CharField(max_length=256)
-    event_time = models.CharField(max_length=1024) # long description is more useful.
-    event_date = models.DateField(blank = True)
+    name = models.CharField(max_length=256, default = " new event")
+    event_time = models.CharField(max_length=1024)
+    event_date = models.DateField(blank = True, null = True)
     players = models.ManyToManyField(Player, through= 'EventPlayers')
     finished = models.BooleanField(default= False)
 

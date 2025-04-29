@@ -8,6 +8,7 @@
   <a href="{% url 'event' event_name=event.name  event_id=event.id %}">
   {{ event.name }}
 </a>
+<br>
 {%endfor%}
 
 <h3> 
@@ -19,6 +20,7 @@
 
 <a href="{% url 'edit' %}"> player and game editing </a><br>
 <a href="{% url 'login' %}"> login </a><br>
+<a href="{% url 'logout' %}">Sign Out</a>
 for event managment go to that event and select manage
 
 
