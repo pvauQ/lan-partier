@@ -1,4 +1,5 @@
 env/
 *.sqlite3
-lan_scores/migrations/
+/lan_scores/migrations/
+
 *.pyc

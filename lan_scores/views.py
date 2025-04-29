@@ -231,7 +231,7 @@ def add_player_event(request):
             player.pic_link = data['pic_link']
             player.save()
         else:
-            print(f"adding existing player {data['existing_player']}")
+            #print(f"adding existing player {data['existing_player']}")
             player = Player.objects.filter(name = data['existing_player']).first()
 
         event = Event.objects.filter(id =event_id).first()
@@ -273,7 +273,7 @@ def add_game_event(request):
             game.extra_text = data["extra_text"]
             game.save()
         else: # vanha
-            print(data["existing_game"])
+            #(data["existing_game"])
             game = Game.objects.filter(name = data["existing_game"]).first()
         #print(GameInstance.objects.filter(id = event_id))
 
