@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h3> alll events</h3><br>
+{%for event in events%}
+
+  <a href="{% url 'event' event_name=event.name  event_id=event.id %}">
+  {{ event.name }}
+</a>
+{%endfor%}
+
+<h3> 
+<a href="{% url 'home' %}"> latest </a>
+</h3><br>
+
+<h3> admin stuff</h3><br>
+
+
+<a href="{% url 'edit' %}"> player and game editing </a><br>
+<a href="{% url 'login' %}"> login </a><br>
+for event managment go to that event and select manage
+
+
+{% endblock content%}

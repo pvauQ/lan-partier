@@ -40,7 +40,6 @@ def event(request, event_name, event_id):
     event_games =  GameInstance.objects.filter(event = event)
     games = Game.objects.filter(id__in = event_games.values('game'))
     
-    print(games.values_list('id'))
     scores =(Scores.objects.filter(game_instance__in=event_games.values_list('id'))
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
@@ -67,8 +66,17 @@ def event(request, event_name, event_id):
                 total_pisteet[y] += s[0]
             else: pisteet[x][y] = 0
 
-    print("perkele")
-    print(scores)
+    high = -9999
+    winner_index = None
+    for i, piste in enumerate(total_pisteet):
+        if piste > high:
+            high = piste
+            winner_index = i
+            print(winner_index)
+        print(f"{ piste} ja indeksi {i} ja voittaja indeksi {winner_index}")
+    winner_index += 1 #tasapeli ei oo kiva :D
+
+
     pisteet_pelit = zip(pelit,pisteet)
 
     context = {
@@ -77,7 +85,8 @@ def event(request, event_name, event_id):
         'event_games': event_games,
         'games': games,
         'scores': pisteet_pelit,
-        'total_scores': total_pisteet 
+        'total_scores': total_pisteet ,
+        'winner' :winner_index
     }
     return render(request, "score_page.html", context)
 
@@ -87,6 +96,16 @@ def event(request, event_name, event_id):
 def home(request):
     latest_event = Event.objects.latest('event_date')
     return redirect('event', event_name = latest_event.name, event_id = latest_event.id)
+
+def front_page(request):
+
+    events = Event.objects.all()
+
+    context = {
+        'events':events
+
+    }
+    return render(request, 'front_page.html' ,context)
 
 
 
@@ -115,14 +134,15 @@ def manage(request, event_name, event_id):
     total_pisteet = [0 for _ in range(len(pelaajat))] 
 
     for x in range(len(pelit)):
-        if pelit[x].hiden == True:
-            pisteet[x][y] = (0, pelaajat[y].id)
-            continue
         for y in range(len(pelaajat)):
             s = scores.filter(game_instance = pelit[x], player = pelaajat[y])
             s = list(s.values_list('score', flat=True))
             temp =[]
-            if len(s)==1:
+
+            if pelit[x].hiden == True:
+                pisteet[x][y] = (s[0], pelaajat[y].id)
+                ## ei kasvateta total scorea
+            elif len(s)==1:
                 pisteet[x][y] = (s[0],pelaajat[y].id )
                 total_pisteet[y] += s[0]
             else: 
@@ -154,17 +174,18 @@ def edit_panel(request):
         return redirect('login')
     players = Player.objects.all()
     games = Game.objects.all()
-
+    events = Event.objects.all()
     context = {
         'players' : players,
-        'games' : games
+        'games' : games,
+        'events': events
     }
 
     return render(request, 'admin_edit.html' ,context)
 
 def update_score(request):
     
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
 
     ##TODO: THIS CAN BUG OUT IF DB RETURNS PLAYERS IN DIFFERENT ORDER THAN IN MANAGE VIEW...(new player added in between?)
         GI = get_object_or_404(GameInstance, id =request.POST.get('game_instance_id'))
@@ -191,13 +212,13 @@ def update_score(request):
             else:
                 score.score = new_score
                 score.save()
-            print(f" old {score} new score {new_score}")
-
+            print(f" old {score} new score {new_score}")  
+        return redirect('manage_event', event_name = GI.event.name, event_id = GI.event.id)
     
-    return redirect('manage_event', event_name = GI.event.name, event_id = GI.event.id)
+    else: return redirect('login')
 
 def add_player_event(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         form = AddPlayerForm(request.POST)
         event_id = request.POST.get('event_id')
         if form.is_valid():
@@ -219,24 +240,24 @@ def add_player_event(request):
             event_player.player = player
             event_player.event = event
             event_player.save()
-            print("widdu")
-
-    return redirect('manage_event', event_name = event.name, event_id = event.id)
+        return redirect('manage_event', event_name = event.name, event_id = event.id)
+    
+    else: return redirect('login')
 
 
 def delete_player_event(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
 
         event = Event.objects.filter(id =request.POST.get('event_id')).first()
         player = Player.objects.filter(id = request.POST.get('player_id')).first()
 
         EventPlayers.objects.filter(event  =event, player = player).first().delete()
-        
-
-    return redirect('manage_event', event_name = event.name, event_id = request.POST.get('event_id') )
+        return redirect('manage_event', event_name = event.name, event_id = request.POST.get('event_id') )
+    
+    else: return redirect('login')
 
 def add_game_event(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         form = AddGameForm(request.POST)
         game = Game()
         event_id = request.POST.get('event_id')
@@ -263,36 +284,65 @@ def add_game_event(request):
         #print(GI)
         GI.hiden = False
         GI.save()
-
-
-    return redirect('manage_event', name=event.name, id=event_id)
+        return redirect('manage_event', event_name=event.name, event_id=event_id)
     
+    else: return redirect('login')
 
 
 
 def hide_gameinstance(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         gi_id = request.POST.get('game_instance_id')
         GI = GameInstance.objects.filter(id = gi_id).first()
         GI.hiden = not GI.hiden
         GI.save()
-    return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
+        return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
+    else: return redirect('login')
+
 
 def delete_gameinstance(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         gi_id = request.POST.get('game_instance_id')
         GI = GameInstance.objects.filter(id = gi_id).first()
         GI.delete()
         return redirect('manage_event', event_name=GI.event.name, event_id=GI.event_id)
+    
+    else: return redirect('login')
 
-        
-def update_event(request,id):
-    if request.method == 'POST' and request.user.is_authenticated:
-        pass
+def finish_event(request):
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
+        event_id =request.POST.get('event_id')
+        event = get_object_or_404(Event, id = event_id)
+        event.finished =  not event.finished
+        event.save()
+        return redirect('event', event_name=event.name, event_id=event_id)
+    else: return redirect('login')
+def update_event(request):
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
+        event_id =request.POST.get('event_id')
+        event_time = request.POST.get('event_time')
+        event_name = request.POST.get('name')
 
+        event = get_object_or_404(Event, id = event_id)
+        print(event_time)
+        event.event_time =event_time
+        event.name = event_name
+        event.save()
+        return redirect('edit')
+    
+    else: return redirect('login')
+
+
+def add_event(request):
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
+        event = Event()
+        event.name = "i'm a blank event edit mee"
+        event.save()
+
+    else: return redirect('login')
 
 def update_player(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         player_id = request.POST.get('player_id')
         name = request.POST.get('name')
         pic_link = request.POST.get('pic_link')
@@ -310,11 +360,12 @@ def update_player(request):
         #messages.success(request, 'Player updated successfully!')
         return redirect('edit')
 
+    else: return redirect('login')
 
 
 def update_game(request):
     print("perkele")
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == 'POST' and request.user.groups.filter(name='event_admin').exists():
         game_id = request.POST.get('game_id')
         name = request.POST.get('name')
         link = request.POST.get('link')
@@ -323,16 +374,12 @@ def update_game(request):
         
         # Get the game object
         game = get_object_or_404(Game, id=game_id)
-        
-        # Update fields
         game.name = name
-        game.link = link if link else ""  # Handle blank fields
+        game.link = link if link else ""  
         game.extra_text = extra_text if extra_text else ""
         game.extra_link = extra_link if extra_link else ""
         game.save()
         
-        messages.success(request, 'Game updated successfully!')
-        return redirect('edit')  # Make sure 'edit_panel' is defined in your urls.py
-        
-    messages.error(request, 'Invalid request method')
-    return redirect('edit')
+        return redirect('edit') 
+    
+    else: return redirect('login')

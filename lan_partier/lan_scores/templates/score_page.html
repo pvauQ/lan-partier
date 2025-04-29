@@ -7,7 +7,7 @@
 </head>
 <BODY TEXT="white">
 
-<h1 style="color:rgba(84, 255, 0, 1); background-color:rgba(0, 0, 0, 1); text-align:center; font-size:600%;">{{event.name}} Scoreboard {{event.time}}</h1>
+<h1 style="color:rgba(84, 255, 0, 1); background-color:rgba(0, 0, 0, 1); text-align:center; font-size:600%;">{{event.name}} Scoreboard {{event.event_time}}</h1>
 
 
 <table style="width:100%">
@@ -22,9 +22,23 @@
 
 <tr>
   <th><p style="font-size:50px;">Yhteispisteet</p></th>
-  {%for score in total_scores%}
-    <th><p style="font-size:50px;">{{score}}</p></th>
-  {%endfor%}
+  {%if event.finished == False%}
+    {%for score in total_scores%}    
+      <th><p style="font-size:50px;">{{score}}</p></th>
+      {%endfor%}
+    
+    {%else%}
+
+      {%for score in total_scores%}
+        
+      {% if forloop.counter == winner %}
+      <th style="background-color: gold;"><p style="font-size:50px;">{{score}}</p></th>
+
+      {%else%}
+        <th><p style="font-size:50px;">{{score}}</p></th>
+      {%endif%}  
+    {%endfor%}
+  {%endif%}
 </tr>
 
 {%for game, row in scores%}

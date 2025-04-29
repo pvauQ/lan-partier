@@ -15,10 +15,10 @@ class Event(models.Model):
         return f"{self.name}"
     
     name = models.CharField(max_length=256)
-    custom_pic_link = models.CharField(max_length=1024,blank = True)
-    event_time = models.CharField(max_length=1024) # long description is more usefull.
-    event_date = models.DateField()
+    event_time = models.CharField(max_length=1024) # long description is more useful.
+    event_date = models.DateField(blank = True)
     players = models.ManyToManyField(Player, through= 'EventPlayers')
+    finished = models.BooleanField(default= False)
 
 class PastEvents(models.Model):
    pass
