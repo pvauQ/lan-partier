@@ -144,7 +144,7 @@ def manage(request, event_name, event_id):
             temp =[]
 
             if pelit[x].hiden == True:
-                pisteet[x][y] = (s[0], pelaajat[y].id)
+                pisteet[x][y] = (0, pelaajat[y].id)
                 ## ei kasvateta total scorea
             elif len(s)==1:
                 pisteet[x][y] = (s[0],pelaajat[y].id )
