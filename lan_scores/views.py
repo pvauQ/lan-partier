@@ -47,6 +47,7 @@ def event(request, event_name, event_id):
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
     ) 
+
     pelaajat = [None]*len(players.values())
     pelit =   [None]*len(event_games.values())
     for i in range(len(pelaajat)):
@@ -59,7 +60,7 @@ def event(request, event_name, event_id):
 
     for x in range(len(pelit)):
         if pelit[x].hiden == True:
-            pisteet[x][y] = (0, pelaajat[y].id)
+            #pisteet[x][y] = (0, pelaajat[y].id)
             continue
         for y in range(len(pelaajat)):
             s = scores.filter(game_instance = pelit[x], player = pelaajat[y])
@@ -127,6 +128,7 @@ def manage(request, event_name, event_id):
                                 .select_related('player','game_instance')
                                 .order_by('player', "game_instance")
     ) 
+
     pelaajat = [None]*len(players.values())
     pelit =   [None]*len(event_games.values())
     for i in range(len(pelaajat)):
@@ -143,12 +145,13 @@ def manage(request, event_name, event_id):
             s = list(s.values_list('score', flat=True))
             temp =[]
 
-            if pelit[x].hiden == True:
-                pisteet[x][y] = (0, pelaajat[y].id)
-                ## ei kasvateta total scorea
-            elif len(s)==1:
-                pisteet[x][y] = (s[0],pelaajat[y].id )
-                total_pisteet[y] += s[0]
+            if  len(s) == 1:
+                if pelit[x].hiden == True:
+                    pisteet[x][y] = (s[0],pelaajat[y].id )
+                    ## ei kasvateta total scorea
+                else:
+                    pisteet[x][y] = (s[0],pelaajat[y].id )
+                    total_pisteet[y] += s[0]
             else: 
                 pisteet[x][y] = (0, pelaajat[y].id)
 

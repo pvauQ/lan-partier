@@ -1,4 +1,4 @@
-Lan-partier is simple web app for counting scores at lan parties. Saves stuff into db, pages itself are simple static html, so archiving is easy without leaving the app running
+Lan-partier is simple web app for counting scores at lan parties. Saves stuff into db, pages itself are simply static html, so archiving is simple, just save html page. :)
 
 ![kuva](https://github.com/user-attachments/assets/e0102b2b-3029-41a3-a41d-f3d8f4b25299)
 
